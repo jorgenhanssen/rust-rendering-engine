@@ -2,7 +2,7 @@ extern crate nalgebra_glm as glm;
 
 pub struct Renderable {
     vertices: Vec<glm::Vec3>,
-    faces: Vec<glm::Vec3>,
+    indices: Vec<u32>,
 }
 
 impl Renderable {
@@ -11,10 +11,8 @@ impl Renderable {
     fn object_vertices(&self) -> Vec<glm::Vec3>{
         let mut result: Vec<glm::Vec3> = vec![];
 
-        for f in self.faces.iter() {
-            result.push(self.vertices[f.x as usize]);
-            result.push(self.vertices[f.y as usize]);
-            result.push(self.vertices[f.z as usize]);
+        for i in self.indices.iter() {
+            result.push(self.vertices[*i as usize]);
         }
 
         result
@@ -98,7 +96,7 @@ pub fn triangle() -> Renderable{
             glm::vec3(0.6, -0.6, 0.0),
             glm::vec3(0.0, 0.6, 0.0),
         ],
-        faces: vec![glm::vec3(0.0, 1.0, 2.0)] // only 1 face
+        indices: vec!(0, 1, 2)
     }
 }
 
@@ -110,10 +108,10 @@ pub fn square() -> Renderable{
             glm::vec3(-0.6, 0.6, 0.0),  // top-left
             glm::vec3(0.6, 0.6, 0.0),   // top-right
         ],
-        faces: vec![
-            glm::vec3(0.0, 1.0, 2.0),
-            glm::vec3(2.0, 1.0, 3.0),
-        ]
+        indices: vec!(
+            0, 1, 2,
+            2, 1, 3
+        )
     }
 }
 
@@ -126,16 +124,16 @@ pub fn circle(resolution: i32) -> Renderable{
         vertices.push(glm::vec3(v.cos(), v.sin(), 0.0))
     }
 
-    let mut faces: Vec<glm::Vec3> = vec![];
+    let mut indices: Vec<u32> = vec![];
     for i in 0..resolution {
-        faces.push(glm::vec3(0.0, i as f32, (i+1) as f32));
+        indices.push(0); indices.push(i as u32); indices.push((i+1) as u32);
     }
 
     // We need this last one to complete the circle
-    faces.push(glm::vec3(0.0, (vertices.len()-1) as f32, 1.0));
+    indices.push(0); indices.push((vertices.len()-1) as u32); indices.push(1);
 
     Renderable{
         vertices: vertices,
-        faces: faces,
+        indices: indices,
     }
 }
