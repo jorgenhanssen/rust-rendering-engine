@@ -24,7 +24,7 @@ fn main() {
     // Set up the necessary objects to deal with windows and event handling
     let el = glutin::event_loop::EventLoop::new();
     let wb = glutin::window::WindowBuilder::new()
-        .with_title("Gloom-rs")
+        .with_title("Rust Rendering Engine")
         .with_resizable(false)
         .with_inner_size(glutin::dpi::LogicalSize::new(SCREEN_W, SCREEN_H));
     let cb = glutin::ContextBuilder::new()
@@ -45,7 +45,6 @@ fn main() {
             gl::load_with(|symbol| c.get_proc_address(symbol) as *const _);
             c
         };
-
 
         // Set up openGL
         unsafe {
@@ -81,7 +80,7 @@ fn main() {
         let mut last_frame_time = first_frame_time;
 
         // Create the object that should be rendered
-        let shape = renderable::circle(32);
+        let shape = renderable::circle(12);
 
         // we currently only have 1 vao, so no need to push vao creation
         // into the loop yet.
