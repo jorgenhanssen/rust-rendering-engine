@@ -19,6 +19,7 @@ use glutin::event_loop::ControlFlow;
 const SCREEN_W: u32 = 800;
 const SCREEN_H: u32 = 600;
 
+
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
     let el = glutin::event_loop::EventLoop::new();
