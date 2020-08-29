@@ -6,29 +6,26 @@ pub struct Renderable {
 }
 
 impl Renderable {
-    // object_vertices returns the renderable's vertices as they would
-    // be rendered. (duplicates).
-    fn object_vertices(&self) -> Vec<glm::Vec3>{
-        let mut result: Vec<glm::Vec3> = vec![];
-
-        for i in self.indices.iter() {
-            result.push(self.vertices[*i as usize]);
-        }
-
-        result
-    }
-
     // vao creates a VAO (vertex array object) of the Renderable and returns the ID.
     pub fn vao(&self) -> (u32, i32) {
+        // triangle_vertices contains a description of all triangles in the mesh
+        // so that every set of 3 vertices creates a triangle. This set will, therefore,
+        // contain duplicates of vertices shared by some triangles.
+        let mut triangle_vertices: Vec<glm::Vec3> = vec![];
+        for i in self.indices.iter() {
+            triangle_vertices.push(self.vertices[*i as usize]);
+        }
+
+        // unpacked_vertices contains all vertices from triangle_vertices but
+        // unpacked into [vec1.x, vec1.y, vec1.z, vec2.x, vec2.y, ...]
+        let unpacked_vertices = unpack_vertices(triangle_vertices);
+        
         let (mut vbo, mut vao) = (0, 0);
-
-        let vertices = unpack_vertices(self.object_vertices());
-
         unsafe {
             // Set up VBO
             gl::GenBuffers(1, &mut vbo);
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-            gl::BufferData(gl::ARRAY_BUFFER, size_in_bytes(&vertices), to_ptr(&vertices), gl::STATIC_DRAW);
+            gl::BufferData(gl::ARRAY_BUFFER, size_in_bytes(&unpacked_vertices), to_ptr(&unpacked_vertices), gl::STATIC_DRAW);
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
 
             // Set up VAO
@@ -42,7 +39,7 @@ impl Renderable {
             gl::BindVertexArray(0);
         }
 
-        return (vao, vertices.len() as i32)
+        return (vao, unpacked_vertices.len() as i32)
     }
 }
 
