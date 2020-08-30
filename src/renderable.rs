@@ -135,6 +135,34 @@ pub fn circle(resolution: i32) -> Renderable{
     }
 }
 
+pub fn sine(resolution: i32, frequency: f32) -> Renderable{
+    // The screen is between -1 and 1; there is a length of 2.
+    let step_size = 2.0 / resolution as f32;
+
+    let mut vertices: Vec<glm::Vec3> = vec![];
+    for i in 0..resolution {
+        let v = (i as f32) * step_size* frequency * std::f32::consts::PI;
+        vertices.push(glm::vec3((i as f32 * step_size)-1.0, v.sin(), 0.0));
+    }
+
+    let mut indices: Vec<u32> = vec![];
+    for i in 0..resolution {
+        if i > resolution - 3 {
+            break;
+        }
+
+        // TODO: find a way to decide triangle direction.
+        indices.push(i as u32); indices.push((i+1) as u32); indices.push((i+2) as u32);
+        indices.push(i as u32); indices.push((i+2) as u32); indices.push((i+1) as u32); 
+    }
+
+    Renderable{
+        vertices: vertices,
+        indices: indices,
+    }
+}
+
+
 
 
 // Special shapes for the assignment
