@@ -134,3 +134,17 @@ pub fn circle(resolution: i32) -> Renderable{
         indices: indices,
     }
 }
+
+
+
+// Special shapes for the assignment
+pub fn task_2_a() -> Renderable{
+    Renderable{
+        vertices: vec![
+            glm::vec3(0.6, -0.8, -1.2),
+            glm::vec3(0.0, 0.4, 0.0),
+            glm::vec3(-0.8, -0.2, 1.2),
+        ],
+        indices: vec!(0, 1, 2)
+    }
+}
