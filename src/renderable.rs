@@ -45,6 +45,38 @@ impl Renderable {
 
 
 
+// A naive implementation of obj files
+pub fn from_obj(path: &str) -> Renderable {
+    // TODO: Add error handling
+
+    let mut result = Renderable{
+        vertices: vec![],
+        indices: vec![]
+    };
+
+    let obj_src = std::fs::read_to_string(path)
+        .expect(&format!("Failed to read obj file. {}", path));
+    
+    let lines = obj_src.split("\n");
+    for line in lines {
+        let splits: Vec<&str> = line.split(" ").collect();
+
+        if splits[0] == "v" {
+            let v = glm::vec3(splits[1].parse().unwrap(), splits[2].parse().unwrap(), splits[3].parse().unwrap());
+            result.vertices.push(v);
+        }
+        if splits[0] == "f" {
+            let i1 : u32 = splits[1].parse().unwrap();
+            let i2 : u32 = splits[2].parse().unwrap();
+            let i3 : u32 = splits[3].parse().unwrap();
+            result.indices.push(i1 - 1);
+            result.indices.push(i2 - 1);
+            result.indices.push(i3 - 1);
+        }
+    }
+
+    result
+}
 
 
 
