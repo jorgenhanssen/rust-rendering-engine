@@ -10,7 +10,6 @@ use std::sync::{Mutex, Arc, RwLock};
 
 mod shader;
 mod util;
-mod helpers;
 mod renderable;
 
 use glutin::event::{Event, WindowEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
