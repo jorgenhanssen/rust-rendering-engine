@@ -19,17 +19,17 @@ impl Renderable {
     }
     
     fn compute_vao(&mut self) {
-        // triangle_vertices contains a description of all triangles in the mesh
+        // vertices contains a description of all triangles in the mesh
         // so that every set of 3 vertices creates a triangle. This set will, therefore,
         // contain duplicates of vertices shared by some triangles.
-        let mut triangle_vertices: Vec<glm::Vec3> = vec![];
+        let mut vertices: Vec<glm::Vec3> = vec![];
         for i in self.indices.iter() {
-            triangle_vertices.push(self.vertices[*i as usize]);
+            vertices.push(self.vertices[*i as usize]);
         }
 
         // unpacked_vertices contains all vertices from triangle_vertices but
         // unpacked into [vec1.x, vec1.y, vec1.z, vec2.x, vec2.y, ...]
-        let unpacked_vertices = unpack_vertices(triangle_vertices);
+        let unpacked_vertices = unpack_vertices(vertices);
         
         let (mut vbo, mut vao) = (0, 0);
         unsafe {
@@ -59,6 +59,11 @@ impl Renderable {
         gl::BindVertexArray(0);
     }
 }
+
+
+
+
+
 
 
 // A naive implementation of obj files
