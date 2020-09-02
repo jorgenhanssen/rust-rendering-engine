@@ -1,9 +1,9 @@
-use gl::types::*;
+// use gl::types::*;
 use std::{
-    mem,
+    // mem,
     ptr,
-    str,
-    os::raw::c_void,
+    // str,
+    // os::raw::c_void,
 };
 use std::thread;
 use std::sync::{Mutex, Arc, RwLock};
@@ -55,18 +55,15 @@ fn main() {
             gl::DebugMessageCallback(Some(util::debug_callback), ptr::null());
 
             // Wireframe for testing
-            gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+            // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
         }
-
-        // Basic usage of shader helper
-        // The code below returns a shader object, which contains the field .program_id
-        // The snippet is not enough to do the assignment, and will need to be modified (outside of just using the correct path)
-        
+    
         // Set up shaders
         unsafe {
             let shaders = shader::ShaderBuilder::new()
-            .attach_file("shaders/simple.frag")
             .attach_file("shaders/simple.vert")
+            .attach_file("shaders/simple.frag")
+            // .attach_file("shaders/checkerboard.frag") // <= for checkerboard (remove simple.frag)
             .link();
 
             gl::UseProgram(shaders.program_id)
@@ -88,7 +85,7 @@ fn main() {
         // The main rendering loop
         loop {
             let now = std::time::Instant::now();
-            let elapsed = now.duration_since(first_frame_time).as_secs_f32();
+            // let elapsed = now.duration_since(first_frame_time).as_secs_f32(); // not in use yet.
             let delta_time = now.duration_since(last_frame_time).as_secs_f32();
             last_frame_time = now;
 

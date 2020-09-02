@@ -46,6 +46,7 @@ impl Renderable {
 
 
 // A naive implementation of obj files
+#[allow(dead_code)]
 pub fn from_obj(path: &str) -> Renderable {
     // TODO: Add error handling
 
@@ -117,9 +118,9 @@ fn unpack_vertices(vertices: Vec<glm::Vec3>) -> Vec<f32> {
 // Some fun shapes to test with ==============================================
 // TODO: Remove these
 
+#[allow(dead_code)]
 pub fn triangle() -> Renderable{
     Renderable{
-        // coordinates from assignment
         vertices: vec![
             glm::vec3(-0.6, -0.6, 0.0),
             glm::vec3(0.6, -0.6, 0.0),
@@ -129,6 +130,22 @@ pub fn triangle() -> Renderable{
     }
 }
 
+// This is a triangle that is not rendered due to back-face culling.
+// It is used in task 2 b.
+#[allow(dead_code)]
+pub fn hidden_triangle() -> Renderable{
+    Renderable{
+        vertices: vec![
+            glm::vec3(-0.6, -0.6, 0.0),
+            glm::vec3(0.6, -0.6, 0.0),
+            glm::vec3(0.0, 0.6, 0.0),
+        ],
+        indices: vec!(2, 1, 0)
+    }
+}
+
+
+#[allow(dead_code)]
 pub fn square() -> Renderable{
     Renderable{
         vertices: vec![
@@ -144,6 +161,7 @@ pub fn square() -> Renderable{
     }
 }
 
+#[allow(dead_code)]
 pub fn circle(resolution: i32) -> Renderable{
     let step_size: f32 = 2.0 * std::f32::consts::PI / resolution as f32;
 
@@ -167,19 +185,21 @@ pub fn circle(resolution: i32) -> Renderable{
     }
 }
 
-pub fn sine(resolution: i32, frequency: f32) -> Renderable{
+#[allow(dead_code)]
+pub fn sine(resolution: i32, frequency: f32, thickness: f32) -> Renderable{
     // The screen is between -1 and 1; there is a length of 2.
     let step_size = 2.0 / resolution as f32;
 
     let mut vertices: Vec<glm::Vec3> = vec![];
     for i in 0..resolution {
         let v = (i as f32) * step_size* frequency * std::f32::consts::PI;
-        vertices.push(glm::vec3((i as f32 * step_size)-1.0, v.sin(), 0.0));
+        vertices.push(glm::vec3((i as f32 * step_size)-1.0, v.sin()/2.0, 0.0));
+        vertices.push(glm::vec3((i as f32 * step_size)-1.0, v.sin()/2.0+thickness, 0.0));
     }
 
     let mut indices: Vec<u32> = vec![];
-    for i in 0..resolution {
-        if i > resolution - 3 {
+    for i in 0..vertices.len() {
+        if i > vertices.len() - 3 {
             break;
         }
 
@@ -197,7 +217,10 @@ pub fn sine(resolution: i32, frequency: f32) -> Renderable{
 
 
 
+
 // Special shapes for the assignment
+
+#[allow(dead_code)]
 pub fn task_2_a() -> Renderable{
     Renderable{
         vertices: vec![
