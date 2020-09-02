@@ -3,11 +3,22 @@ extern crate nalgebra_glm as glm;
 pub struct Renderable {
     vertices: Vec<glm::Vec3>,
     indices: Vec<u32>,
+    vao: u32,
 }
 
 impl Renderable {
-    // vao creates a VAO (vertex array object) of the Renderable and returns the ID.
-    pub fn vao(&self) -> (u32, i32) {
+    pub fn new(vertices: Vec<glm::Vec3>, indices: Vec<u32>) -> Renderable {
+        let mut r = Renderable{
+            vertices,
+            indices,
+            vao: 0,
+        };
+        r.compute_vao();
+    
+        return r;
+    }
+    
+    fn compute_vao(&mut self) {
         // triangle_vertices contains a description of all triangles in the mesh
         // so that every set of 3 vertices creates a triangle. This set will, therefore,
         // contain duplicates of vertices shared by some triangles.
@@ -39,10 +50,15 @@ impl Renderable {
             gl::BindVertexArray(0);
         }
 
-        return (vao, unpacked_vertices.len() as i32)
+        self.vao = vao;
+    }
+
+    pub unsafe fn draw(&self) {
+        gl::BindVertexArray(self.vao);
+        gl::DrawArrays(gl::TRIANGLES, 0, self.indices.len() as i32);
+        gl::BindVertexArray(0);
     }
 }
-
 
 
 // A naive implementation of obj files
@@ -50,10 +66,8 @@ impl Renderable {
 pub fn from_obj(path: &str) -> Renderable {
     // TODO: Add error handling
 
-    let mut result = Renderable{
-        vertices: vec![],
-        indices: vec![]
-    };
+    let mut vertices: Vec<glm::Vec3> = vec![];
+    let mut indices: Vec<u32> = vec![];
 
     let obj_src = std::fs::read_to_string(path)
         .expect(&format!("Failed to read obj file. {}", path));
@@ -64,19 +78,19 @@ pub fn from_obj(path: &str) -> Renderable {
 
         if splits[0] == "v" {
             let v = glm::vec3(splits[1].parse().unwrap(), splits[2].parse().unwrap(), splits[3].parse().unwrap());
-            result.vertices.push(v);
+            vertices.push(v);
         }
         if splits[0] == "f" {
             let i1 : u32 = splits[1].parse().unwrap();
             let i2 : u32 = splits[2].parse().unwrap();
             let i3 : u32 = splits[3].parse().unwrap();
-            result.indices.push(i1 - 1);
-            result.indices.push(i2 - 1);
-            result.indices.push(i3 - 1);
+            indices.push(i1 - 1);
+            indices.push(i2 - 1);
+            indices.push(i3 - 1);
         }
     }
 
-    result
+    return Renderable::new(vertices, indices);
 }
 
 
@@ -111,54 +125,50 @@ fn unpack_vertices(vertices: Vec<glm::Vec3>) -> Vec<f32> {
 
 
 
-
-
-
-
 // Some fun shapes to test with ==============================================
 // TODO: Remove these
 
 #[allow(dead_code)]
 pub fn triangle() -> Renderable{
-    Renderable{
-        vertices: vec![
+    Renderable::new(
+        vec![
             glm::vec3(-0.6, -0.6, 0.0),
             glm::vec3(0.6, -0.6, 0.0),
             glm::vec3(0.0, 0.6, 0.0),
         ],
-        indices: vec!(0, 1, 2)
-    }
+        vec!(0, 1, 2)
+    )
 }
 
 // This is a triangle that is not rendered due to back-face culling.
 // It is used in task 2 b.
 #[allow(dead_code)]
 pub fn hidden_triangle() -> Renderable{
-    Renderable{
-        vertices: vec![
+    Renderable::new(
+        vec![
             glm::vec3(-0.6, -0.6, 0.0),
             glm::vec3(0.6, -0.6, 0.0),
             glm::vec3(0.0, 0.6, 0.0),
         ],
-        indices: vec!(2, 1, 0)
-    }
+        vec!(2, 1, 0)
+    )
 }
 
 
 #[allow(dead_code)]
 pub fn square() -> Renderable{
-    Renderable{
-        vertices: vec![
+    Renderable::new(
+        vec![
             glm::vec3(-0.6, -0.6, 0.0), // bottom-left
             glm::vec3(0.6, -0.6, 0.0),  // bottom-right
             glm::vec3(-0.6, 0.6, 0.0),  // top-left
             glm::vec3(0.6, 0.6, 0.0),   // top-right
         ],
-        indices: vec!(
+        vec!(
             0, 1, 2,
             2, 1, 3
-        )
-    }
+        ),
+    )
 }
 
 #[allow(dead_code)]
@@ -179,10 +189,7 @@ pub fn circle(resolution: i32) -> Renderable{
     // We need this last one to complete the circle
     indices.push(0); indices.push((vertices.len()-1) as u32); indices.push(1);
 
-    Renderable{
-        vertices: vertices,
-        indices: indices,
-    }
+    Renderable::new(vertices,indices)
 }
 
 #[allow(dead_code)]
@@ -208,10 +215,7 @@ pub fn sine(resolution: i32, frequency: f32, thickness: f32) -> Renderable{
         indices.push(i as u32); indices.push((i+2) as u32); indices.push((i+1) as u32); 
     }
 
-    Renderable{
-        vertices: vertices,
-        indices: indices,
-    }
+    Renderable::new(vertices,indices)
 }
 
 
@@ -222,12 +226,12 @@ pub fn sine(resolution: i32, frequency: f32, thickness: f32) -> Renderable{
 
 #[allow(dead_code)]
 pub fn task_2_a() -> Renderable{
-    Renderable{
-        vertices: vec![
+    Renderable::new(
+        vec![
             glm::vec3(0.6, -0.8, -1.2),
             glm::vec3(0.0, 0.4, 0.0),
             glm::vec3(-0.8, -0.2, 1.2),
         ],
-        indices: vec!(0, 1, 2)
-    }
+        vec!(0, 1, 2),
+    )
 }

@@ -76,11 +76,11 @@ fn main() {
         let mut last_frame_time = first_frame_time;
 
         // Create the object that should be rendered
-        let shape = renderable::from_obj("objects/teapot.obj");
-
-        // we currently only have 1 vao, so no need to push vao creation
-        // into the loop yet.
-        let (vao, num_vertices) = shape.vao();
+        let shape = renderable::circle(128);
+        // let shape = renderable::triangle();
+        // let shape = renderable::square();
+        // let shape = renderable::sine(128, 3.0, 0.01);
+        // let shape = renderable::from_obj("objects/teapot.obj"); // divide by 4 ish in vertex shader to see.
 
         // The main rendering loop
         loop {
@@ -111,8 +111,7 @@ fn main() {
                 gl::ClearColor(0.163, 0.163, 0.163, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT);
 
-                gl::BindVertexArray(vao);
-                gl::DrawArrays(gl::TRIANGLES, 0, num_vertices);
+                shape.draw();
             }
 
             context.swap_buffers().unwrap();
