@@ -273,3 +273,68 @@ pub fn sine(resolution: i32, frequency: f32, thickness: f32) -> Renderable{
 
     Renderable::new(vertices,indices)
 }
+
+
+
+
+
+
+
+// Assigment-specific code =====================================================================================================================
+
+#[allow(dead_code)]
+pub fn task_1_b() -> (Renderable, Renderable, Renderable){
+    (
+        Renderable::new(
+            vec![
+                Vertex {
+                    position: glm::vec3(-0.8, -0.8, 0.0),
+                    color: glm::vec4(1.0, 0.0, 0.0, 1.0)
+                },
+                Vertex {
+                    position: glm::vec3(-0.2, -0.8, 0.0),
+                    color: glm::vec4(1.0, 1.0, 0.0, 1.0)
+                },
+                Vertex {
+                    position: glm::vec3(-0.5, -0.1, 0.0),
+                    color: glm::vec4(0.0, 1.0, 0.0, 1.0)
+                }
+            ],
+            vec!(0, 1, 2),
+        ),
+        Renderable::new(
+            vec![
+                Vertex {
+                    position: glm::vec3(-0.3, 0.1, 0.0),
+                    color: glm::vec4(0.0, 1.0, 0.0, 1.0)
+                },
+                Vertex {
+                    position: glm::vec3(0.3, 0.1, 0.0),
+                    color: glm::vec4(0.0, 1.0, 1.0, 1.0)
+                },
+                Vertex {
+                    position: glm::vec3(0.0, 0.8, 0.0),
+                    color: glm::vec4(0.0, 0.0, 1.0, 1.0)
+                }
+            ],
+            vec!(0, 1, 2),
+        ),
+        Renderable::new(
+            vec![
+                Vertex {
+                    position: glm::vec3(0.2, -0.8, 0.0),
+                    color: glm::vec4(0.0, 0.0, 1.0, 1.0)
+                },
+                Vertex {
+                    position: glm::vec3(0.8, -0.8, 0.0),
+                    color: glm::vec4(1.0, 0.0, 1.0, 1.0)
+                },
+                Vertex {
+                    position: glm::vec3(0.5, -0.1, 0.0),
+                    color: glm::vec4(1.0, 0.0, 0.0, 1.0)
+                }
+            ],
+            vec!(0, 1, 2),
+        ),
+    )
+}

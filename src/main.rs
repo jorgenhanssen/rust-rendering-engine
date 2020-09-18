@@ -76,11 +76,14 @@ fn main() {
         let mut last_frame_time = first_frame_time;
 
         // Create the object that should be rendered
-        let shape = renderable::circle(128);
+        // let shape = renderable::circle(128);
         // let shape = renderable::triangle();
         // let shape = renderable::square();
         // let shape = renderable::sine(128, 3.0, 0.01);
         // let shape = renderable::from_obj("objects/teapot.obj"); // divide by 4 ish in vertex shader to see.
+
+        // Assignment-specific:
+        let (t1, t2, t3) = renderable::task_1_b();
 
         // The main rendering loop
         loop {
@@ -111,7 +114,11 @@ fn main() {
                 gl::ClearColor(0.163, 0.163, 0.163, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT);
 
-                shape.draw();
+                // shape.draw()
+
+                t1.draw();
+                t2.draw();
+                t3.draw();
             }
 
             context.swap_buffers().unwrap();
