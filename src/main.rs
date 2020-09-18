@@ -8,9 +8,12 @@ use std::{
 use std::thread;
 use std::sync::{Mutex, Arc, RwLock};
 
+extern crate nalgebra_glm as glm;
+
 mod shader;
 mod util;
 mod renderable;
+mod camera;
 
 use glutin::event::{Event, WindowEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -46,46 +49,54 @@ fn main() {
         };
 
         // Set up openGL
+        let program_id: u32;
+        let mvp_id: gl::types::GLint;
         unsafe {
+            // misc boilerplate
             gl::Enable(gl::CULL_FACE);
             gl::Disable(gl::MULTISAMPLE);
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
             gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS);
             gl::DebugMessageCallback(Some(util::debug_callback), ptr::null());
+            gl::Enable(gl::DEPTH_TEST);
+            gl::DepthFunc(gl::LESS);
+            
 
-            // Wireframe for testing
-            // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
-        }
-    
-        // Set up shaders
-        unsafe {
+            // Set up shaders
             let shaders = shader::ShaderBuilder::new()
             .attach_file("shaders/simple.vert")
             .attach_file("shaders/simple.frag")
-            // .attach_file("shaders/checkerboard.frag") // <= for checkerboard (remove simple.frag)
             .link();
 
-            gl::UseProgram(shaders.program_id)
+            program_id = shaders.program_id;
+            gl::UseProgram(program_id);
+
+            // Set up MVP
+            let mvp_name = "mvp";
+            mvp_id = gl::GetUniformLocation(program_id, std::ffi::CString::new(mvp_name).unwrap().as_ptr());
         }
+    
+        let projection: glm::Mat4 = glm::perspective(SCREEN_W  as f32 / SCREEN_H as f32, 1.0, 1.0, 1000.0);
+        let mut camera = camera::Camera::new();
 
-        // Used to demonstrate keyboard handling -- feel free to remove
-        let mut _arbitrary_number = 0.0;
-
-        let first_frame_time = std::time::Instant::now();
-        let mut last_frame_time = first_frame_time;
+        camera.set_position(glm::vec3(0.0, 0.0, -2.0));
 
         // Create the object that should be rendered
         // let shape = renderable::circle(128);
-        // let shape = renderable::triangle();
+        let shape = renderable::triangle();
         // let shape = renderable::square();
         // let shape = renderable::sine(128, 3.0, 0.01);
         // let shape = renderable::from_obj("objects/teapot.obj"); // divide by 4 ish in vertex shader to see.
 
         // Assignment-specific:
-        let (t1, t2, t3) = renderable::task_1_b();
+        // let shape = renderable::task_1_b();
+        // let shape = renderable::task_2_a();
 
         // The main rendering loop
+        let first_frame_time = std::time::Instant::now();
+        let mut last_frame_time = first_frame_time;
+
         loop {
             let now = std::time::Instant::now();
             // let elapsed = now.duration_since(first_frame_time).as_secs_f32(); // not in use yet.
@@ -96,12 +107,45 @@ fn main() {
             if let Ok(keys) = pressed_keys.lock() {
                 for key in keys.iter() {
                     match key {
+                        // Translation
                         VirtualKeyCode::A => {
-                            _arbitrary_number += delta_time;
+                            camera.translate(-camera::left() * delta_time);
                         },
                         VirtualKeyCode::D => {
-                            _arbitrary_number -= delta_time;
+                            camera.translate(-camera::right() * delta_time);
                         },
+                        VirtualKeyCode::W => {
+                            camera.translate(-camera::forward() * delta_time);
+                        },
+                        VirtualKeyCode::S => {
+                            camera.translate(-camera::back() * delta_time);
+                        },
+                        VirtualKeyCode::C => {
+                            camera.translate(-camera::up() * delta_time);
+                        },
+                        VirtualKeyCode::X => {
+                            camera.translate(-camera::down() * delta_time);
+                        },
+
+                        // rotation
+                        VirtualKeyCode::Up => {
+                            camera.rotate(-camera::left() * delta_time);
+                        }
+                        VirtualKeyCode::Down => {
+                            camera.rotate(-camera::right() * delta_time);
+                        }
+                        VirtualKeyCode::Left => {
+                            camera.rotate(-camera::up() * delta_time);
+                        }
+                        VirtualKeyCode::Right => {
+                            camera.rotate(-camera::down() * delta_time);
+                        }
+                        VirtualKeyCode::Q => {
+                            camera.rotate(-camera::forward() * delta_time);
+                        }
+                        VirtualKeyCode::E => {
+                            camera.rotate(-camera::back() * delta_time);
+                        }
 
 
                         _ => { }
@@ -109,16 +153,18 @@ fn main() {
                 }
             }
 
+            // Set mvp
+            unsafe {
+                let mvp: glm::Mat4 = projection * camera.view();
+                gl::UniformMatrix4fv(mvp_id, 1, gl::FALSE, mvp.as_ptr() as *const _);
+            }
+
             // Drawing
             unsafe {
                 gl::ClearColor(0.163, 0.163, 0.163, 1.0);
-                gl::Clear(gl::COLOR_BUFFER_BIT);
+                gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-                // shape.draw()
-
-                t1.draw();
-                t2.draw();
-                t3.draw();
+                shape.draw()
             }
 
             context.swap_buffers().unwrap();

@@ -40,18 +40,22 @@ impl Renderable {
         // unpacked into [..., ...vec_i.position, ...vec_i.colors, ...]
         let unpacked_vertices = unpack_vertices(vertices);
 
-        let (mut vbo, mut vao) = (0, 0);
+        let (mut vbo, mut vao, mut ebo) = (0, 0, 0);
         unsafe {
             // Set up VBO
             gl::GenBuffers(1, &mut vbo);
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
             gl::BufferData(gl::ARRAY_BUFFER, size_in_bytes(&unpacked_vertices), to_ptr(&unpacked_vertices), gl::STATIC_DRAW);
-            
 
             // Set up VAO
             gl::GenVertexArrays(1, &mut vao);
             gl::BindVertexArray(vao);
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+
+            // set up index buffer
+            gl::GenBuffers(1, &mut ebo);
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
+            gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, size_in_bytes(&self.indices), to_ptr(&self.indices), gl::STATIC_DRAW);
 
 
             let stride_size: i32 = POSITION_SIZE + COLOR_SIZE;
@@ -283,58 +287,43 @@ pub fn sine(resolution: i32, frequency: f32, thickness: f32) -> Renderable{
 // Assigment-specific code =====================================================================================================================
 
 #[allow(dead_code)]
-pub fn task_1_b() -> (Renderable, Renderable, Renderable){
-    (
-        Renderable::new(
-            vec![
-                Vertex {
-                    position: glm::vec3(-0.8, -0.8, 0.0),
-                    color: glm::vec4(1.0, 0.0, 0.0, 1.0)
-                },
-                Vertex {
-                    position: glm::vec3(-0.2, -0.8, 0.0),
-                    color: glm::vec4(1.0, 1.0, 0.0, 1.0)
-                },
-                Vertex {
-                    position: glm::vec3(-0.5, -0.1, 0.0),
-                    color: glm::vec4(0.0, 1.0, 0.0, 1.0)
-                }
-            ],
-            vec!(0, 1, 2),
-        ),
-        Renderable::new(
-            vec![
-                Vertex {
-                    position: glm::vec3(-0.3, 0.1, 0.0),
-                    color: glm::vec4(0.0, 1.0, 0.0, 1.0)
-                },
-                Vertex {
-                    position: glm::vec3(0.3, 0.1, 0.0),
-                    color: glm::vec4(0.0, 1.0, 1.0, 1.0)
-                },
-                Vertex {
-                    position: glm::vec3(0.0, 0.8, 0.0),
-                    color: glm::vec4(0.0, 0.0, 1.0, 1.0)
-                }
-            ],
-            vec!(0, 1, 2),
-        ),
-        Renderable::new(
-            vec![
-                Vertex {
-                    position: glm::vec3(0.2, -0.8, 0.0),
-                    color: glm::vec4(0.0, 0.0, 1.0, 1.0)
-                },
-                Vertex {
-                    position: glm::vec3(0.8, -0.8, 0.0),
-                    color: glm::vec4(1.0, 0.0, 1.0, 1.0)
-                },
-                Vertex {
-                    position: glm::vec3(0.5, -0.1, 0.0),
-                    color: glm::vec4(1.0, 0.0, 0.0, 1.0)
-                }
-            ],
-            vec!(0, 1, 2),
-        ),
+pub fn task_1_b() -> Renderable {
+    Renderable::new(
+        vec![
+            Vertex {position: glm::vec3(-0.8, -0.8, 0.0), color: glm::vec4(1.0, 0.0, 0.0, 1.0)},
+            Vertex {position: glm::vec3(-0.2, -0.8, 0.0), color: glm::vec4(1.0, 1.0, 0.0, 1.0)},
+            Vertex {position: glm::vec3(-0.5, -0.1, 0.0), color: glm::vec4(0.0, 1.0, 0.0, 1.0)},
+
+            Vertex {position: glm::vec3(-0.3, 0.1, 0.0), color: glm::vec4(0.0, 1.0, 0.0, 1.0)},
+            Vertex {position: glm::vec3(0.3, 0.1, 0.0),  color: glm::vec4(0.0, 1.0, 1.0, 1.0)},
+            Vertex {position: glm::vec3(0.0, 0.8, 0.0),  color: glm::vec4(0.0, 0.0, 1.0, 1.0)},
+
+            Vertex {position: glm::vec3(0.2, -0.8, 0.0), color: glm::vec4(0.0, 0.0, 1.0, 1.0)},
+            Vertex {position: glm::vec3(0.8, -0.8, 0.0), color: glm::vec4(1.0, 0.0, 1.0, 1.0)},
+            Vertex {position: glm::vec3(0.5, -0.1, 0.0), color: glm::vec4(1.0, 0.0, 0.0, 1.0)}
+        ],
+        vec!(0, 1, 2, 3, 4, 5, 6, 7, 8),
     )
 }
+
+
+#[allow(dead_code)]
+pub fn task_2_a() -> Renderable {
+    Renderable::new(
+        vec![
+            Vertex {position: glm::vec3(-0.4, -0.5, 0.1), color: glm::vec4(1.0, 0.0, 0.0, 0.3)},
+            Vertex {position: glm::vec3(0.2, -0.5, 0.1), color: glm::vec4(1.0, 0.0, 0.0, 0.3)},
+            Vertex {position: glm::vec3(-0.1, 0.2, 0.1), color: glm::vec4(1.0, 0.0, 0.0, 0.3)},
+
+            Vertex {position: glm::vec3(-0.3, -0.2, 0.2), color: glm::vec4(0.0, 1.0, 0.0, 0.3)},
+            Vertex {position: glm::vec3(0.3, -0.2, 0.2),  color: glm::vec4(0.0, 1.0, 0.0, 0.3)},
+            Vertex {position: glm::vec3(0.0, 0.5, 0.2),  color: glm::vec4(0.0, 1.0, 0.0, 0.3)},
+
+            Vertex {position: glm::vec3(-0.2, -0.5, 0.3), color: glm::vec4(0.0, 0.0, 1.0, 0.3)},
+            Vertex {position: glm::vec3(0.4, -0.5, 0.3), color: glm::vec4(0.0, 0.0, 1.0, 0.3)},
+            Vertex {position: glm::vec3(0.1, 0.2, 0.3), color: glm::vec4(0.0, 0.0, 1.0, 0.3)}
+        ],
+        vec!(0, 1, 2, 3, 4, 5, 6, 7, 8),
+    )
+}
+
