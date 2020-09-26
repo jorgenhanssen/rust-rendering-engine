@@ -12,7 +12,6 @@ extern crate nalgebra_glm as glm;
 
 mod shader;
 mod util;
-// mod renderable;
 mod camera;
 mod mesh;
 
