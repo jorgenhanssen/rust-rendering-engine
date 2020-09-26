@@ -87,7 +87,7 @@ fn main() {
         let shape = renderable::triangle();
         // let shape = renderable::square();
         // let shape = renderable::sine(128, 3.0, 0.01);
-        // let shape = renderable::from_obj("objects/teapot.obj"); // divide by 4 ish in vertex shader to see.
+        // let shape = renderable::from_obj("resources/teapot.obj");
 
         // Assignment-specific:
         // let shape = renderable::task_1_b();
