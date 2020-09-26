@@ -14,6 +14,7 @@ mod shader;
 mod util;
 mod camera;
 mod mesh;
+mod scene_graph;
 
 use glutin::event::{Event, WindowEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;

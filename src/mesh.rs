@@ -16,7 +16,7 @@ pub struct Mesh {
     pub indices: Vec<u32>,
     pub index_count: i32,
 
-    vao: u32,
+    pub vao: u32,
 }
 
 impl Mesh {
