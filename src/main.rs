@@ -87,17 +87,8 @@ fn main() {
 
         camera.set_position(glm::vec3(0.0, 0.0, -2.0));
 
-        // Create the object that should be rendered
-        // let shape = renderable::circle(128);
-        // let shape = renderable::triangle();
-        // let shape = renderable::square();
-        // let shape = renderable::sine(128, 3.0, 0.01);
-        // let shape = renderable::from_obj("resources/teapot.obj");
 
-        // Assignment-specific:
-        // let shape = renderable::task_1_b();
-        // let shape = renderable::task_2_a();
-
+        // load models
         let helicopter = mesh::Helicopter::load("resources/helicopter.obj");
         let objects: Vec<mesh::Mesh> = vec![
             mesh::Terrain::load("resources/lunarsurface.obj"),
@@ -107,6 +98,7 @@ fn main() {
             helicopter.tail_rotor,
         ];
 
+        
         // The main rendering loop
         let first_frame_time = std::time::Instant::now();
         let mut last_frame_time = first_frame_time;
