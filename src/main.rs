@@ -12,14 +12,18 @@ extern crate nalgebra_glm as glm;
 
 mod shader;
 mod util;
-mod renderable;
+// mod renderable;
 mod camera;
+mod mesh;
 
 use glutin::event::{Event, WindowEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
 
 const SCREEN_W: u32 = 800;
 const SCREEN_H: u32 = 600;
+
+const TRANSLATION_SPEED_MULTIPLIER: f32 = 30.0;
+const ROTATION_SPEED_MULTIPLIER: f32 = 1.0;
 
 
 fn main() {
@@ -62,6 +66,7 @@ fn main() {
             gl::Enable(gl::DEPTH_TEST);
             gl::DepthFunc(gl::LESS);
             
+            // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
 
             // Set up shaders
             let shaders = shader::ShaderBuilder::new()
@@ -84,7 +89,7 @@ fn main() {
 
         // Create the object that should be rendered
         // let shape = renderable::circle(128);
-        let shape = renderable::triangle();
+        // let shape = renderable::triangle();
         // let shape = renderable::square();
         // let shape = renderable::sine(128, 3.0, 0.01);
         // let shape = renderable::from_obj("resources/teapot.obj");
@@ -92,6 +97,15 @@ fn main() {
         // Assignment-specific:
         // let shape = renderable::task_1_b();
         // let shape = renderable::task_2_a();
+
+        let helicopter = mesh::Helicopter::load("resources/helicopter.obj");
+        let objects: Vec<mesh::Mesh> = vec![
+            mesh::Terrain::load("resources/lunarsurface.obj"),
+            helicopter.body,
+            helicopter.door,
+            helicopter.main_rotor,
+            helicopter.tail_rotor,
+        ];
 
         // The main rendering loop
         let first_frame_time = std::time::Instant::now();
@@ -109,42 +123,42 @@ fn main() {
                     match key {
                         // Translation
                         VirtualKeyCode::A => {
-                            camera.translate(-camera::left() * delta_time);
+                            camera.translate(-camera::left() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::D => {
-                            camera.translate(-camera::right() * delta_time);
+                            camera.translate(-camera::right() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::W => {
-                            camera.translate(-camera::forward() * delta_time);
+                            camera.translate(-camera::forward() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::S => {
-                            camera.translate(-camera::back() * delta_time);
+                            camera.translate(-camera::back() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::C => {
-                            camera.translate(-camera::up() * delta_time);
+                            camera.translate(-camera::up() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::X => {
-                            camera.translate(-camera::down() * delta_time);
+                            camera.translate(-camera::down() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
 
                         // rotation
                         VirtualKeyCode::Up => {
-                            camera.rotate(-camera::left() * delta_time);
+                            camera.rotate(-camera::left() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::Down => {
-                            camera.rotate(-camera::right() * delta_time);
+                            camera.rotate(-camera::right() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::Left => {
-                            camera.rotate(-camera::up() * delta_time);
+                            camera.rotate(-camera::up() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::Right => {
-                            camera.rotate(-camera::down() * delta_time);
+                            camera.rotate(-camera::down() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::Q => {
-                            camera.rotate(-camera::forward() * delta_time);
+                            camera.rotate(-camera::forward() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::E => {
-                            camera.rotate(-camera::back() * delta_time);
+                            camera.rotate(-camera::back() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
 
 
@@ -164,7 +178,9 @@ fn main() {
                 gl::ClearColor(0.163, 0.163, 0.163, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-                shape.draw()
+                for object in objects.iter() {
+                    object.draw();
+                }
             }
 
             context.swap_buffers().unwrap();
