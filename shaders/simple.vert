@@ -8,10 +8,11 @@ out vec4 _color;
 out vec3 _normal;
 
 uniform mat4 mvp;
+uniform mat4 model;
 
 void main()
 {
     gl_Position = mvp * vec4(position, 1.0f);
     _color = color;
-    _normal = normal;
+    _normal = normalize(mat3(model) * normal);
 }

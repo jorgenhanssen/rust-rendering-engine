@@ -15,6 +15,7 @@ mod util;
 mod camera;
 mod mesh;
 mod scene_graph;
+mod toolbox;
 
 use glutin::event::{Event, WindowEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -54,7 +55,6 @@ fn main() {
 
         // Set up openGL
         let program_id: u32;
-        let mvp_id: gl::types::GLint;
         unsafe {
             // misc boilerplate
             gl::Enable(gl::CULL_FACE);
@@ -76,36 +76,37 @@ fn main() {
 
             program_id = shaders.program_id;
             gl::UseProgram(program_id);
-
-            // Set up MVP
-            let mvp_name = "mvp";
-            mvp_id = gl::GetUniformLocation(program_id, std::ffi::CString::new(mvp_name).unwrap().as_ptr());
         }
     
-        let projection: glm::Mat4 = glm::perspective(SCREEN_W  as f32 / SCREEN_H as f32, 1.0, 1.0, 1000.0);
+        let projection: glm::Mat4 = glm::perspective(SCREEN_W  as f32 / SCREEN_H as f32, 1.0, 1.0, 2000.0);
         let mut camera = camera::Camera::new();
 
-        camera.set_position(glm::vec3(0.0, 0.0, -2.0));
 
 
         // load models
+        let terrain = mesh::Terrain::load("resources/lunarsurface.obj");
         let helicopter = mesh::Helicopter::load("resources/helicopter.obj");
-        let objects: Vec<mesh::Mesh> = vec![
-            mesh::Terrain::load("resources/lunarsurface.obj"),
-            helicopter.body,
-            helicopter.door,
-            helicopter.main_rotor,
-            helicopter.tail_rotor,
-        ];
 
-        
+        // setup scene graph
+        let mut root = scene_graph::SceneNode::new();
+
+        // Create tarrain node and attach it to root
+        let mut terrain_node = scene_graph::SceneNode::from_mesh(&terrain);
+        root.add_child(&terrain_node);
+
+        for _ in 0..5 {
+            let mut helicopter_node = scene_graph::SceneNode::new();
+            build_helicopter(&helicopter, &mut helicopter_node);
+            terrain_node.add_child(&helicopter_node);
+        }
+
         // The main rendering loop
         let first_frame_time = std::time::Instant::now();
         let mut last_frame_time = first_frame_time;
 
         loop {
             let now = std::time::Instant::now();
-            // let elapsed = now.duration_since(first_frame_time).as_secs_f32(); // not in use yet.
+            let elapsed = now.duration_since(first_frame_time).as_secs_f32(); // not in use yet.
             let delta_time = now.duration_since(last_frame_time).as_secs_f32();
             last_frame_time = now;
 
@@ -115,42 +116,42 @@ fn main() {
                     match key {
                         // Translation
                         VirtualKeyCode::A => {
-                            camera.translate(-camera::left() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
+                            camera.translate(-toolbox::left() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::D => {
-                            camera.translate(-camera::right() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
+                            camera.translate(-toolbox::right() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::W => {
-                            camera.translate(-camera::forward() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
+                            camera.translate(-toolbox::forward() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::S => {
-                            camera.translate(-camera::back() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
+                            camera.translate(-toolbox::back() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::C => {
-                            camera.translate(-camera::up() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
+                            camera.translate(-toolbox::up() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::X => {
-                            camera.translate(-camera::down() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
+                            camera.translate(-toolbox::down() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
                         },
 
                         // rotation
                         VirtualKeyCode::Up => {
-                            camera.rotate(-camera::left() * delta_time * ROTATION_SPEED_MULTIPLIER);
+                            camera.rotate(-toolbox::left() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::Down => {
-                            camera.rotate(-camera::right() * delta_time * ROTATION_SPEED_MULTIPLIER);
+                            camera.rotate(-toolbox::right() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::Left => {
-                            camera.rotate(-camera::up() * delta_time * ROTATION_SPEED_MULTIPLIER);
+                            camera.rotate(-toolbox::up() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::Right => {
-                            camera.rotate(-camera::down() * delta_time * ROTATION_SPEED_MULTIPLIER);
+                            camera.rotate(-toolbox::down() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::Q => {
-                            camera.rotate(-camera::forward() * delta_time * ROTATION_SPEED_MULTIPLIER);
+                            camera.rotate(-toolbox::forward() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::E => {
-                            camera.rotate(-camera::back() * delta_time * ROTATION_SPEED_MULTIPLIER);
+                            camera.rotate(-toolbox::back() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
 
 
@@ -159,20 +160,35 @@ fn main() {
                 }
             }
 
-            // Set mvp
-            unsafe {
-                let mvp: glm::Mat4 = projection * camera.view();
-                gl::UniformMatrix4fv(mvp_id, 1, gl::FALSE, mvp.as_ptr() as *const _);
+            let mut offset = 0.0;
+            for &top_heli in &terrain_node.children {
+                let heading = toolbox::simple_heading_animation(elapsed + offset);
+
+                unsafe {
+                    (*top_heli).position = glm::vec3(heading.x, 0.0, heading.z);
+                    let mut heli = (*top_heli).children[0];
+
+                    (*heli).rotation = glm::vec3(heading.pitch, heading.yaw, -heading.roll);
+
+                    let mut main_rotor = (*heli).children[0];
+                    (*main_rotor).rotation = glm::vec3(0.0, elapsed*30.0, 0.0);
+
+                    let mut tail_rotor = (*heli).children[1];
+                    (*tail_rotor).rotation = glm::vec3(elapsed*30.0, 0.0, 0.0);
+                }
+
+                offset += 1.6;
             }
+
+            let view_projection: glm::Mat4 = projection * camera.view();
 
             // Drawing
             unsafe {
                 gl::ClearColor(0.163, 0.163, 0.163, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-                for object in objects.iter() {
-                    object.draw();
-                }
+                root.update_transformations(&glm::identity());
+                root.draw(program_id, &view_projection);
             }
 
             context.swap_buffers().unwrap();
@@ -237,4 +253,20 @@ fn main() {
             _ => { }
         }
     });
+}
+
+fn build_helicopter(helicopter: &mesh::Helicopter, node: &mut scene_graph::Node) {
+    let mut helicopter_node = scene_graph::SceneNode::new();
+
+    let mut main_rotor_node = scene_graph::SceneNode::from_mesh(&helicopter.main_rotor);
+    helicopter_node.add_child(&main_rotor_node);
+
+    let mut tail_rotor_node = scene_graph::SceneNode::from_mesh(&helicopter.tail_rotor);
+    tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
+    helicopter_node.add_child(&tail_rotor_node);
+
+    helicopter_node.add_child(&scene_graph::SceneNode::from_mesh(&helicopter.body));
+    helicopter_node.add_child(&scene_graph::SceneNode::from_mesh(&helicopter.door));
+
+    node.add_child(&helicopter_node);
 }

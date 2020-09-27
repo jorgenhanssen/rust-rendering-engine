@@ -35,3 +35,22 @@ pub fn simple_heading_animation(time: f32) -> Heading {
 }
 
 
+
+pub fn left() -> glm::Vec3 {
+    return glm::vec3(-1.0, 0.0, 0.0);
+}
+pub fn right() -> glm::Vec3 {
+    return glm::vec3(1.0, 0.0, 0.0);
+}
+pub fn up() -> glm::Vec3 {
+    return glm::vec3(0.0, 1.0, 0.0);
+}
+pub fn down() -> glm::Vec3 {
+    return glm::vec3(0.0, -1.0, 0.0);
+}
+pub fn forward() -> glm::Vec3 {
+    return glm::vec3(0.0, 0.0, -1.0);
+}
+pub fn back() -> glm::Vec3 {
+    return glm::vec3(0.0, 0.0, 1.0);
+}
