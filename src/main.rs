@@ -258,7 +258,7 @@ fn main() {
 fn build_helicopter(helicopter: &mesh::Helicopter, node: &mut scene_graph::Node) {
     let mut helicopter_node = scene_graph::SceneNode::new();
 
-    let mut main_rotor_node = scene_graph::SceneNode::from_mesh(&helicopter.main_rotor);
+    let main_rotor_node = scene_graph::SceneNode::from_mesh(&helicopter.main_rotor);
     helicopter_node.add_child(&main_rotor_node);
 
     let mut tail_rotor_node = scene_graph::SceneNode::from_mesh(&helicopter.tail_rotor);
