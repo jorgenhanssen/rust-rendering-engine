@@ -126,8 +126,8 @@ impl SceneNode {
         m = glm::translate(&m, &self.reference_point);
 
         // Rotate
-        m = glm::rotate(&m, self.rotation.x, &toolbox::left());
         m = glm::rotate(&m, self.rotation.y, &toolbox::up());
+        m = glm::rotate(&m, self.rotation.x, &toolbox::left());
         m = glm::rotate(&m, self.rotation.z, &toolbox::forward());
 
         // Scale

@@ -20,11 +20,11 @@ mod toolbox;
 use glutin::event::{Event, WindowEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
 
-const SCREEN_W: u32 = 800;
-const SCREEN_H: u32 = 600;
+const SCREEN_W: u32 = 1920;
+const SCREEN_H: u32 = 1080;
 
-const TRANSLATION_SPEED_MULTIPLIER: f32 = 30.0;
-const ROTATION_SPEED_MULTIPLIER: f32 = 1.0;
+const ROTATION_SPEED_MULTIPLIER: f32 = 0.4;
+const CAMERA_SOFTNESS: f32 = 28.0;
 
 
 fn main() {
@@ -79,26 +79,25 @@ fn main() {
         }
     
         let projection: glm::Mat4 = glm::perspective(SCREEN_W  as f32 / SCREEN_H as f32, 1.0, 1.0, 2000.0);
-        let mut camera = camera::Camera::new();
 
+        let mut camera = camera::ChaseCamera::new();
+        camera.set_offset(glm::vec2(-8.0, -24.0));
+        camera.set_rotation(glm::vec3(-0.35, 0.0, 0.0));
 
 
         // load models
-        let terrain = mesh::Terrain::load("resources/lunarsurface.obj");
-        let helicopter = mesh::Helicopter::load("resources/helicopter.obj");
+        let terrain_model = mesh::Terrain::load("resources/lunarsurface.obj");
+        let helicopter_model = mesh::Helicopter::load("resources/helicopter.obj");
 
         // setup scene graph
         let mut root = scene_graph::SceneNode::new();
 
         // Create tarrain node and attach it to root
-        let mut terrain_node = scene_graph::SceneNode::from_mesh(&terrain);
+        let mut terrain_node = scene_graph::SceneNode::from_mesh(&terrain_model);
         root.add_child(&terrain_node);
 
-        for _ in 0..5 {
-            let mut helicopter_node = scene_graph::SceneNode::new();
-            build_helicopter(&helicopter, &mut helicopter_node);
-            terrain_node.add_child(&helicopter_node);
-        }
+        let mut helicopter = Helicopter::new(&helicopter_model, &mut terrain_node);
+
 
         // The main rendering loop
         let first_frame_time = std::time::Instant::now();
@@ -106,7 +105,7 @@ fn main() {
 
         loop {
             let now = std::time::Instant::now();
-            let elapsed = now.duration_since(first_frame_time).as_secs_f32(); // not in use yet.
+            // let elapsed = now.duration_since(first_frame_time).as_secs_f32(); // not in use yet.
             let delta_time = now.duration_since(last_frame_time).as_secs_f32();
             last_frame_time = now;
 
@@ -116,69 +115,44 @@ fn main() {
                     match key {
                         // Translation
                         VirtualKeyCode::A => {
-                            camera.translate(-toolbox::left() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
+                            helicopter.rotate(toolbox::up() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::D => {
-                            camera.translate(-toolbox::right() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
+                            helicopter.rotate(toolbox::down() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         },
                         VirtualKeyCode::W => {
-                            camera.translate(-toolbox::forward() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
+                            helicopter.throttle(delta_time);
                         },
                         VirtualKeyCode::S => {
-                            camera.translate(-toolbox::back() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
-                        },
-                        VirtualKeyCode::C => {
-                            camera.translate(-toolbox::up() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
-                        },
-                        VirtualKeyCode::X => {
-                            camera.translate(-toolbox::down() * delta_time * TRANSLATION_SPEED_MULTIPLIER);
+                            helicopter.throttle(-delta_time);
                         },
 
                         // rotation
                         VirtualKeyCode::Up => {
-                            camera.rotate(-toolbox::left() * delta_time * ROTATION_SPEED_MULTIPLIER);
+                            helicopter.rotate(toolbox::right() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::Down => {
-                            camera.rotate(-toolbox::right() * delta_time * ROTATION_SPEED_MULTIPLIER);
+                            helicopter.rotate(toolbox::left() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::Left => {
-                            camera.rotate(-toolbox::up() * delta_time * ROTATION_SPEED_MULTIPLIER);
+                            helicopter.rotate(toolbox::forward() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
                         VirtualKeyCode::Right => {
-                            camera.rotate(-toolbox::down() * delta_time * ROTATION_SPEED_MULTIPLIER);
+                            helicopter.rotate(toolbox::back() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
-                        VirtualKeyCode::Q => {
-                            camera.rotate(-toolbox::forward() * delta_time * ROTATION_SPEED_MULTIPLIER);
-                        }
-                        VirtualKeyCode::E => {
-                            camera.rotate(-toolbox::back() * delta_time * ROTATION_SPEED_MULTIPLIER);
-                        }
-
 
                         _ => { }
                     }
                 }
             }
 
-            let mut offset = 0.0;
-            for &top_heli in &terrain_node.children {
-                let heading = toolbox::simple_heading_animation(elapsed + offset);
+            helicopter.frame(delta_time);
 
-                unsafe {
-                    (*top_heli).position = glm::vec3(heading.x, 0.0, heading.z);
-                    let mut heli = (*top_heli).children[0];
-
-                    (*heli).rotation = glm::vec3(heading.pitch, heading.yaw, -heading.roll);
-
-                    let mut main_rotor = (*heli).children[0];
-                    (*main_rotor).rotation = glm::vec3(0.0, elapsed*30.0, 0.0);
-
-                    let mut tail_rotor = (*heli).children[1];
-                    (*tail_rotor).rotation = glm::vec3(elapsed*30.0, 0.0, 0.0);
-                }
-
-                offset += 1.6;
-            }
+            camera.chase(
+                helicopter.get_position(), 
+                helicopter.get_rotation(), 
+                CAMERA_SOFTNESS / (glm::length(&helicopter.get_speed()) + 1.0)
+            );
 
             let view_projection: glm::Mat4 = projection * camera.view();
 
@@ -255,18 +229,75 @@ fn main() {
     });
 }
 
-fn build_helicopter(helicopter: &mesh::Helicopter, node: &mut scene_graph::Node) {
-    let mut helicopter_node = scene_graph::SceneNode::new();
 
-    let main_rotor_node = scene_graph::SceneNode::from_mesh(&helicopter.main_rotor);
-    helicopter_node.add_child(&main_rotor_node);
 
-    let mut tail_rotor_node = scene_graph::SceneNode::from_mesh(&helicopter.tail_rotor);
-    tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
-    helicopter_node.add_child(&tail_rotor_node);
+struct Helicopter {
+    root: scene_graph::Node,
+    body: scene_graph::Node,
+    main_rotor: scene_graph::Node,
+    tail_rotor: scene_graph::Node,
+    door: scene_graph::Node,
 
-    helicopter_node.add_child(&scene_graph::SceneNode::from_mesh(&helicopter.body));
-    helicopter_node.add_child(&scene_graph::SceneNode::from_mesh(&helicopter.door));
+    speed: glm::Vec3,
+    throttle: f32,
+}
+impl Helicopter {
+    pub fn new(helicopter: &mesh::Helicopter, parent: &mut scene_graph::Node) -> Helicopter {
+        let mut h = Helicopter{
+            root: scene_graph::SceneNode::new(),
+            body: scene_graph::SceneNode::from_mesh(&helicopter.body),
+            main_rotor: scene_graph::SceneNode::from_mesh(&helicopter.main_rotor),
+            tail_rotor: scene_graph::SceneNode::from_mesh(&helicopter.tail_rotor),
+            door: scene_graph::SceneNode::from_mesh(&helicopter.door),
 
-    node.add_child(&helicopter_node);
+            speed: glm::vec3(0.0, 0.0, 0.0),
+            throttle: 0.0,
+        };
+
+        // Node adjustments
+        h.tail_rotor.reference_point = glm::vec3(0.35, 2.3, 10.4);
+
+        // Bind graph
+        h.root.add_child(&h.body);
+        h.body.add_child(&h.door);
+        h.body.add_child(&h.main_rotor);
+        h.body.add_child(&h.tail_rotor);
+
+        parent.add_child(&h.root);
+
+        return h;
+    }
+
+    pub fn get_rotation(&self) -> glm::Vec3 {
+        return self.body.rotation;
+    }
+    pub fn get_position(&self) -> glm::Vec3 {
+        return self.root.position;
+    }
+    pub fn get_speed(&self) -> glm::Vec3 {
+        return self.speed;
+    }
+
+    pub fn throttle(&mut self, value: f32) {
+        if (value + self.throttle).abs() < 0.5 {
+            self.throttle += value;
+        }
+    }
+
+    pub fn rotate(&mut self, rotation: glm::Vec3) {
+        self.body.rotation += rotation;
+    }
+
+    pub fn frame(&mut self, delta_time: f32) {
+        self.main_rotor.rotation += glm::vec3(0.0, delta_time*(self.throttle+1.0)*25.0, 0.0);
+        self.tail_rotor.rotation += glm::vec3(delta_time*20.0, 0.0, 0.0);
+
+        self.speed = self.speed + glm::rotate_y_vec3(&glm::vec3(
+            0.2 * self.body.rotation.z * delta_time, 
+            0.2 * self.throttle * delta_time,
+            -0.2 * self.body.rotation.x * delta_time, 
+        ), self.body.rotation.y);
+
+        self.root.position += self.speed;
+   }    
 }
