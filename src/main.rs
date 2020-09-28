@@ -24,7 +24,7 @@ const SCREEN_W: u32 = 1920;
 const SCREEN_H: u32 = 1080;
 
 const ROTATION_SPEED_MULTIPLIER: f32 = 0.4;
-const CAMERA_SOFTNESS: f32 = 28.0;
+const CAMERA_SOFTNESS: f32 = 80.0;
 
 
 fn main() {
@@ -126,8 +126,6 @@ fn main() {
                         VirtualKeyCode::S => {
                             helicopter.throttle(-delta_time);
                         },
-
-                        // rotation
                         VirtualKeyCode::Up => {
                             helicopter.rotate(toolbox::right() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         }
@@ -139,6 +137,13 @@ fn main() {
                         }
                         VirtualKeyCode::Right => {
                             helicopter.rotate(toolbox::back() * delta_time * ROTATION_SPEED_MULTIPLIER);
+                        }
+
+                        VirtualKeyCode::PageUp => {
+                            helicopter.toggle_door(true);
+                        }
+                        VirtualKeyCode::PageDown => {
+                            helicopter.toggle_door(false);
                         }
 
                         _ => { }
@@ -240,6 +245,8 @@ struct Helicopter {
 
     speed: glm::Vec3,
     throttle: f32,
+
+    door_open: bool
 }
 impl Helicopter {
     pub fn new(helicopter: &mesh::Helicopter, parent: &mut scene_graph::Node) -> Helicopter {
@@ -252,6 +259,8 @@ impl Helicopter {
 
             speed: glm::vec3(0.0, 0.0, 0.0),
             throttle: 0.0,
+
+            door_open: false
         };
 
         // Node adjustments
@@ -278,6 +287,10 @@ impl Helicopter {
         return self.speed;
     }
 
+    pub fn toggle_door(&mut self, open: bool) {
+        self.door_open = open;
+    }
+
     pub fn throttle(&mut self, value: f32) {
         if (value + self.throttle).abs() < 0.5 {
             self.throttle += value;
@@ -299,5 +312,16 @@ impl Helicopter {
         ), self.body.rotation.y);
 
         self.root.position += self.speed;
+
+
+
+        // Animate the door - z direction is boring, but works
+        let mut door_diff = 0.0;
+        if self.door_open {
+            door_diff = 2.0;
+        }
+
+        door_diff -= self.door.position.z;
+        self.door.position.z += door_diff * delta_time;
    }    
 }
