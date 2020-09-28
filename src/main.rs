@@ -24,7 +24,7 @@ const SCREEN_W: u32 = 1920;
 const SCREEN_H: u32 = 1080;
 
 const ROTATION_SPEED_MULTIPLIER: f32 = 0.4;
-const CAMERA_SOFTNESS: f32 = 80.0;
+const CAMERA_SOFTNESS: f32 = 28.0;
 
 
 fn main() {
@@ -113,7 +113,6 @@ fn main() {
             if let Ok(keys) = pressed_keys.lock() {
                 for key in keys.iter() {
                     match key {
-                        // Translation
                         VirtualKeyCode::A => {
                             helicopter.rotate(toolbox::up() * delta_time * ROTATION_SPEED_MULTIPLIER);
                         },
